@@ -19,16 +19,17 @@ class Dataset(object):
     def cross_split(self, ratio=0.1, shuffle=True):
         assert self.__nSize > ratio * 10, 'ratio is too large.'
         test_size = math.floor(self.__nSize * ratio)
-        assert test_size < 1, 'ratio is too small so that no testset will be split.'
+        assert test_size >= 1, 'ratio is too small so that no testset will be split.'
         train_size = self.__nSize - test_size
         X = copy.deepcopy(self.__data)
         y = X.pop(self.__target_col_name)
         X = X.as_matrix()
         y = y.as_matrix()
         if shuffle is True:
-            shuffle_ix = np.random.shuffle(range(self.__nSize))
+            shuffle_ix = np.random.permutation(range(self.__nSize))
             X = X[shuffle_ix]
             y = y[shuffle_ix]
+
         trainset = (X[:train_size], y[:train_size])
         testset = (X[train_size:], y[train_size:])
         return trainset, testset

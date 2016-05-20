@@ -40,8 +40,10 @@ class DataLoader(object):
             return self.__load_csv
         elif self.__data_type == 'auto':
             if self.__path.endswith('.arff'):
+                self.__data_type = 'arff'
                 return self.__load_arff
             elif self.__path.endswith('.csv'):
+                self.__data_type = '.csv'
                 return self.__load_csv
         else:
             raise ValueError
