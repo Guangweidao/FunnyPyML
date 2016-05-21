@@ -18,7 +18,7 @@ class Dataset(object):
 
     def cross_split(self, ratio=0.1, shuffle=True):
         assert self.__nSize > ratio * 10, 'ratio is too large.'
-        test_size = math.floor(self.__nSize * ratio)
+        test_size = int(math.floor(self.__nSize * ratio))
         assert test_size >= 1, 'ratio is too small so that no testset will be split.'
         train_size = self.__nSize - test_size
         X = copy.deepcopy(self.__data)
