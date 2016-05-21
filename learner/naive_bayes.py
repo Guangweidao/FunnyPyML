@@ -12,6 +12,7 @@ from base.metric import accuracy_score
 class NaiveBayes(AbstractClassifier):
     def __init__(self):
         super(NaiveBayes, self).__init__()
+        self._nSize = 0
 
     def fit(self, X, y):
         assert self.__check_valid(X, y), 'input is invalid.'
@@ -21,22 +22,39 @@ class NaiveBayes(AbstractClassifier):
             self.feat_set = dict()
             for icol in range(X.shape[1]):
                 self.feat_set[icol] = list(np.unique(X[:, icol]))
+        nSize = X.shape[0]
         freq_y = {k: v for k, v in FreqDict(list(y))}
-        proba_y = {k: np.log(float(v) / len(y)) for k, v in freq_y.iteritems()}
-        cond_proba_feat = {k: {i: defaultdict(float) for i in range(X.shape[1])} for k in proba_y.keys()}
-        for c in proba_y.keys():
+        cond_freq_feat = {k: {i: defaultdict(int) for i in range(X.shape[1])} for k in freq_y.keys()}
+        for c in freq_y.keys():
             for icol in self.feat_set.keys():
                 for feat_val in self.feat_set[icol]:
-                    cond_proba_feat[c][icol][feat_val] = 1
+                    cond_freq_feat[c][icol][feat_val] = 1
         for irow in range(X.shape[0]):
             for icol in range(X.shape[1]):
-                cond_proba_feat[y[irow]][icol][X[irow, icol]] += 1
-        for c, feats in cond_proba_feat.iteritems():
+                cond_freq_feat[y[irow]][icol][X[irow, icol]] += 1
+        self._nSize += nSize
+        if self._is_trained is False:
+            self._parameter['freq_y'] = freq_y
+            self._parameter['cond_freq_feat'] = cond_freq_feat
+            self._parameter['proba_y'] = dict()
+            self._parameter['cond_proba_feat'] = {k: {i: defaultdict(float) for i in range(X.shape[1])} for k in
+                                                  self._parameter['cond_freq_feat'].keys()}
+        else:
+            for c in freq_y.keys():
+                self._parameter['freq_y'][c] += freq_y[c]
+            for c in self._parameter['proba_y'].keys():
+                for icol in self.feat_set.keys():
+                    for feat_val in self.feat_set[icol]:
+                        self._parameter['cond_freq_feat'][c][icol][feat_val] += cond_freq_feat[c][icol][feat_val] - 1
+        self._parameter['proba_y'] = {k: np.log(float(v) / self._nSize) for k, v in
+                                      self._parameter['freq_y'].iteritems()}
+        for c, feats in self._parameter['cond_freq_feat'].iteritems():
             for icol, feat in feats.iteritems():
                 for feat_val in feat.keys():
-                    feat[feat_val] = np.log(float(feat[feat_val]) / (freq_y[c] + len(self.feat_set[icol])))
-        self._parameter['proba_y'] = proba_y
-        self._parameter['cond_proba_feat'] = cond_proba_feat
+                    self._parameter['cond_proba_feat'][c][icol][feat_val] = np.log(
+                        float(feat[feat_val]) / (self._parameter['freq_y'][c] + len(self.feat_set[icol])))
+
+        self._is_trained = True
 
     def __check_valid(self, X, y):
         if self._is_trained is False:
@@ -76,7 +94,7 @@ class NaiveBayes(AbstractClassifier):
 if __name__ == '__main__':
     path = os.getcwd() + '/../dataset/dataset_21_car.arff'
     loader = DataLoader(path)
-    dataset = loader.load(target_col_name='Class')
+    dataset = loader.load(target_col_name='class')
     trainset, testset = dataset.cross_split()
     nb = NaiveBayes()
     nb.fit(trainset[0], trainset[1])
