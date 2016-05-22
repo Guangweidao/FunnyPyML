@@ -26,6 +26,7 @@ class LogisticRegression(AbstractClassifier):
         self._is_plot_loss = is_plot_loss
 
     def predict(self, X):
+        assert self._is_trained, 'model must be trained before predict.'
         nSize = X.shape[0]
         proj = np.dot(X, self._parameter['weight']) + np.repeat(
             np.reshape(self._parameter['bias'], (1, self._parameter['bias'].shape[0])), X.shape[0], axis=0)

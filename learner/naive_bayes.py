@@ -72,6 +72,7 @@ class NaiveBayes(AbstractClassifier):
             return is_valid
 
     def predict(self, X):
+        assert self._is_trained, 'model must be trained before predict.'
         proba_y = self._parameter['proba_y']
         cond_proba_y = self._parameter['cond_proba_feat']
         pred = list()

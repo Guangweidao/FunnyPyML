@@ -1,20 +1,29 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 import matplotlib.pyplot as plt
 
 
 class FreqDict(object):
-    def __init__(self, terms):
+    def __init__(self, terms, reverse=False):
         assert type(terms) in [list, set], 'input must be list or set.'
-        self.__fd = defaultdict(int)
+        fd = defaultdict(int)
         for term in terms:
-            self.__fd[term] += 1
+            fd[term] += 1
+        self.__fd = OrderedDict()
+        for k, v in sorted(fd.iteritems(), key=lambda d: d[1], reverse=reverse):
+            self.__fd[k] = v
 
     def __getitem__(self, item):
         return self.__fd[item]
 
     def __iter__(self):
         return iter(self.__fd.iteritems())
+
+    def keys(self):
+        return self.__fd.keys()
+
+    def values(self):
+        return self.__fd.values()
 
     def print_freq_dict(self):
         for k, v in self.__fd.iteritems():
@@ -28,4 +37,5 @@ class FreqDict(object):
 if __name__ == '__main__':
     testdata = [1, 2, 3, 1, 2, 5, 1, 9, 2, 5, 6, 2]
     fd = FreqDict(testdata)
-    fd.plot_pie()
+    fd.print_freq_dict()
+    print fd.keys()

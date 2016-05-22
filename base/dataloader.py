@@ -31,7 +31,8 @@ class DataLoader(object):
 
     def __load_csv(self, fp):
         data = pd.read_csv(fp)
-        return data
+        categorical = self.__categorize_data(data)
+        return data, categorical
 
     def __get_loader(self):
         if self.__data_type == 'arff':

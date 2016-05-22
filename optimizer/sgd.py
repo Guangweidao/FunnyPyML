@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import math
+import numpy as np
 from abstract_optimizer import AbstractOptimizer
 from base._logging import get_logger
 

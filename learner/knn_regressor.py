@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
 import numpy as np
-from abstract_learner import AbstractClassifier
-from util.freq_dict import FreqDict
+from abstract_learner import AbstractRegressor
 from base.dataloader import DataLoader
-from base.metric import accuracy_score
+from base.metric import mean_error
 
 
-class KNNClassifier(AbstractClassifier):
+class KNNRegressor(AbstractRegressor):
     def __init__(self, k=10):
-        super(KNNClassifier, self).__init__()
+        super(KNNRegressor, self).__init__()
         self._K = k
 
     def fit(self, X, y):
@@ -24,18 +23,6 @@ class KNNClassifier(AbstractClassifier):
             self._parameter['neighbor_y'] = np.concatenate(self._parameter['neighbor_y'], y)
         self._is_trained = True
 
-    def predict(self, X):
-        assert self._is_trained, 'model must be trained before predict.'
-        pred = list()
-        for i in range(X.shape[0]):
-            dist = list()
-            for irow in range(self._parameter['neighbor_X'].shape[0]):
-                dist.append(np.linalg.norm(X[i, :] - self._parameter['neighbor_X'][irow, :]))
-            indices = np.argsort(dist)[:min(self._K, len(self._parameter['neighbor_y']))]
-            fd = FreqDict(list(self._parameter['neighbor_y'][indices]), reverse=True)
-            pred.append(fd.keys()[0])
-        return pred
-
     def __check_valid(self, X, y):
         if self._is_trained is False:
             return True
@@ -47,14 +34,24 @@ class KNNClassifier(AbstractClassifier):
                 is_valid = True
             return is_valid
 
+    def predict(self, X):
+        assert self._is_trained, 'model must be trained before predict.'
+        pred = list()
+        for i in range(X.shape[0]):
+            dist = list()
+            for irow in range(self._parameter['neighbor_X'].shape[0]):
+                dist.append(np.linalg.norm(X[i, :] - self._parameter['neighbor_X'][irow, :]))
+            indices = np.argsort(dist)[:min(self._K, len(self._parameter['neighbor_y']))]
+            pred.append(np.mean(self._parameter['neighbor_y'][indices]))
+        return pred
+
 
 if __name__ == '__main__':
-    path = os.getcwd() + '/../dataset/electricity-normalized.arff'
+    path = os.getcwd() + '/../dataset/winequality-white.csv'
     loader = DataLoader(path)
-    dataset = loader.load(target_col_name='Class')
+    dataset = loader.load(target_col_name='quality')
     trainset, testset = dataset.cross_split()
-    knn = KNNClassifier(k=10)
+    knn = KNNRegressor()
     knn.fit(trainset[0], trainset[1])
     predict = knn.predict(testset[0])
-    acc = accuracy_score(testset[1], predict)
-    print acc
+    print mean_error(testset[1], predict)
