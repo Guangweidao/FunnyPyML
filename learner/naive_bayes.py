@@ -73,9 +73,11 @@ class NaiveBayes(AbstractClassifier):
 
     def predict(self, X):
         assert self._is_trained, 'model must be trained before predict.'
+        if len(X.shape) == 1:
+            X = np.reshape(X, (1, X.shape[0]))
+        pred = list()
         proba_y = self._parameter['proba_y']
         cond_proba_y = self._parameter['cond_proba_feat']
-        pred = list()
         for irow in range(X.shape[0]):
             _X = X[irow]
             max_prob = None

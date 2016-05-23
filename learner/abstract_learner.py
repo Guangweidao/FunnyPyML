@@ -76,7 +76,7 @@ class AbstractCluster(AbstractLearner):
         self._is_trained = False
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X):
         pass
 
     @abstractmethod

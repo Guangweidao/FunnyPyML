@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import copy
+from util.freq_dict import FreqDict
 
 
 def sigmoid(x):
@@ -28,3 +29,29 @@ def normalize_data(X, y, inplace=False):
     ymean = np.mean(y)
     y = y - ymean
     return X, y, Xmean, ymean, Xstd
+
+
+def euclidean_distance(x, y):
+    assert x.shape == y.shape and len(x.shape) == 1, 'input is invalid.'
+    return np.linalg.norm(x - y)
+
+
+def entropy(x):
+    nSize = len(x)
+    fd = FreqDict(list(x))
+    result = 0.
+    for v in fd.values():
+        prob = float(v) / nSize
+        result += -prob * np.log(prob)
+    return result
+
+
+def condition_entropy(x, cond):
+    assert x.shape == cond.shape, 'input is invalid.'
+    nSize = len(x)
+    fd = FreqDict(list(cond))
+    fd = {k: float(v) / nSize for k, v in fd}
+    result = 0.
+    for k, v in fd.iteritems():
+        result += v * entropy(x[cond == k])
+    return result

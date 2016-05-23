@@ -90,7 +90,7 @@ if __name__ == '__main__':
     predict = lr.predict(testset[0])
     acc = accuracy_score(testset[1], predict)
     print 'test accuracy:', acc
-    lr.dump('LR.model')
+    # lr.dump('LR.model')
     # lr = LogisticRegression.load('LR.model')
     # predict = lr.predict(testset[0])
     # print accuracy_score(testset[1], predict)
