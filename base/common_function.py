@@ -32,6 +32,7 @@ def normalize_data(X, y, inplace=False):
 
 
 def euclidean_distance(x, y):
+    x, y = np.array(x), np.array(y)
     assert x.shape == y.shape and len(x.shape) == 1, 'input is invalid.'
     return np.linalg.norm(x - y)
 

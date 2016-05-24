@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 class DecisionTreeClassifier(AbstractClassifier):
-    def __init__(self, min_split=5, is_prune=True):
+    def __init__(self, min_split=1, is_prune=False):
         super(DecisionTreeClassifier, self).__init__()
         self._min_split = min_split
         self._is_prune = is_prune
@@ -24,9 +24,11 @@ class DecisionTreeClassifier(AbstractClassifier):
         assert self.__check_valid(X, y), 'input is invalid.'
         if self._is_trained is False:
             self._nFeat = X.shape[1]
-            self._nClass = len(np.unique(y))
+            self._class_label = list(np.unique(y))
+            self._class_label.sort()
+            self._nClass = len(self._class_label)
         if self._is_prune is True:
-            spliter = ShuffleSpliter(X.shape[0], ratio=0.3)
+            spliter = ShuffleSpliter(X.shape[0], ratio=0.1)
             train_ix, val_ix = spliter.split()
             Xtrain, ytrain = X[train_ix], y[train_ix]
             Xval, yval = X[val_ix], y[val_ix]
@@ -39,6 +41,8 @@ class DecisionTreeClassifier(AbstractClassifier):
         self._is_trained = True
 
     def _tree_prune(self, tree, Xval, yval):
+        if not isinstance(tree, dict):
+            return
         feat = tree.keys()[0]
         for feat_val in tree[feat].keys():
             if isinstance(tree[feat][feat_val], dict):
@@ -58,15 +62,20 @@ class DecisionTreeClassifier(AbstractClassifier):
                     tree[feat][feat_val] = subtree
                     self._tree_prune(subtree, Xval, yval)
 
-    def predict(self, X):
-        return self._predict(X, self._parameter['tree'])
-
-    def _predict(self, X, tree):
+    def predict_proba(self, X):
         nSize = X.shape[0]
         pred = list()
         for irow in xrange(nSize):
             _x = X[irow]
-            pred.append(self._classify(_x, tree))
+            pred.append(self._leaf_to_proba(self._classify(_x, self._parameter['tree'])))
+        return np.array(pred)
+
+    def predict(self, X):
+        nSize = X.shape[0]
+        pred = list()
+        for irow in xrange(nSize):
+            _x = X[irow]
+            pred.append(self._leaf_to_label(self._classify(_x, self._parameter['tree'])))
         return np.array(pred)
 
     def _classify(self, x, subtree):
@@ -80,33 +89,58 @@ class DecisionTreeClassifier(AbstractClassifier):
         else:
             return subtree
 
+    def _leaf_to_proba(self, leaf):
+        freq = [cnt for label, cnt in leaf]
+        total = np.sum(freq)
+        proba = [float(cnt) / total for cnt in freq]
+        return proba
+
+    def _leaf_to_label(self, leaf):
+        max_cnt = 0
+        max_label = None
+        for label, cnt in leaf:
+            if cnt > max_cnt:
+                max_cnt = cnt
+                max_label = label
+        return max_label
+
     def _build_tree(self, X, y, used_feat):
         if len(np.unique(y)) == 1:
-            return y[0]
+            return self._build_leaf(FreqDict(y))
         if X.shape[1] == 1:
-            return FreqDict(list(y), reverse=True).keys()[0]
+            return self._build_leaf(FreqDict(y))
         if len(y) < self._min_split:
-            return FreqDict(list(y), reverse=True).keys()[0]
+            return self._build_leaf(FreqDict(y))
         _used_feat = copy.deepcopy(used_feat)
         choosed_feat = self._choose_feature(X, y, _used_feat)
+        if choosed_feat is None:
+            return self._build_leaf(FreqDict(y))
         _used_feat.add(choosed_feat)
         root = {choosed_feat: {}}
-        root[choosed_feat]['__default__'] = FreqDict(list(y), reverse=True).keys()[0]
+        root[choosed_feat]['__default__'] = self._build_leaf(FreqDict(y))
         for v in np.unique(X[:, choosed_feat]):
             indices = X[:, choosed_feat] == v
             root[choosed_feat][v] = self._build_tree(X[indices], y[indices], _used_feat)
         return root
 
+    def _build_leaf(self, fd):
+        assert isinstance(fd, FreqDict), 'input of build leaf must be a FreqDict.'
+        leaf = list()
+        for label in self._class_label:
+            cnt = fd[label] if label in fd.keys() else 0
+            leaf.append((label, cnt))
+        return leaf
+
     def _choose_feature(self, X, y, used_feat):
         info_init = entropy(y)
-        max_gain = None
+        max_gain = 0
         choosed_feat = None
         for i in xrange(X.shape[1]):
             if i in used_feat:
                 continue
-            info_split = condition_entropy(X[:, i], y)
+            info_split = condition_entropy(y, X[:, i])
             gain = info_init - info_split
-            if gain > max_gain or max_gain is None:
+            if gain > max_gain:
                 max_gain = gain
                 choosed_feat = i
         return choosed_feat
@@ -192,9 +226,8 @@ if __name__ == '__main__':
     loader = DataLoader(path)
     dataset = loader.load(target_col_name='class')
     trainset, testset = dataset.cross_split()
-    dt = DecisionTreeClassifier(min_split=3, is_prune=True)
+    dt = DecisionTreeClassifier(min_split=1, is_prune=False)
     dt.fit(trainset[0], trainset[1])
-    dt.createPlot()
-    predict = dt.predict(testset[0])
-    performance = accuracy_score(testset[1], predict)
-    print 'test accuracy:', performance
+    predict = dt.predict_proba(testset[0])
+    # performance = accuracy_score(testset[1], predict)
+    # print 'test accuracy:', performance

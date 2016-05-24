@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from collections import OrderedDict, defaultdict
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 class FreqDict(object):
     def __init__(self, terms, reverse=False):
-        assert type(terms) in [list, set], 'input must be list or set.'
+        assert type(terms) in [list, set, np.ndarray], 'input must be list, set or ndarray.'
         fd = defaultdict(int)
         for term in terms:
             fd[term] += 1

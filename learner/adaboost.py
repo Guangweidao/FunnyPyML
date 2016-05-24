@@ -23,7 +23,7 @@ class AdaBoost(AbstractClassifier):
     def fit(self, X, y):
         assert self.__check_valid(X, y), 'input is invalid.'
         nSize = X.shape[0]
-        sampler = Sampler(nSize, nSize)
+        sampler = Sampler(nSize, nSize, mode='fast')
         if self._is_trained is False:
             self._nFeat = X.shape[1]
             self._nClass = len(np.unique(y))
@@ -33,7 +33,7 @@ class AdaBoost(AbstractClassifier):
             if i == 1:
                 sample_ix = np.array([i for i in xrange(nSize)])
             else:
-                sample_ix = sampler.sample(samples_weight, mode='normal')
+                sample_ix = sampler.sample(samples_weight)
             sample_X, sample_y = X[sample_ix], y[sample_ix]
             model.fit(sample_X, sample_y)
             pred = model.predict(X)
@@ -47,6 +47,7 @@ class AdaBoost(AbstractClassifier):
         self._is_trained = True
 
     def predict(self, X):
+        assert self._is_trained, 'model must be trained before predict.'
         nSize = X.shape[0] if len(X.shape) == 2 else 1
         pred = [defaultdict(float) for i in xrange(nSize)]
         for alpha, model in zip(self._parameter['alpha'], self._parameter['model']):
@@ -80,12 +81,12 @@ if __name__ == '__main__':
     loader = DataLoader(path)
     dataset = loader.load(target_col_name='class')
     trainset, testset = dataset.cross_split()
-    nb = NaiveBayes()
+    nb = DecisionTreeClassifier(is_prune=False)
     nb.fit(trainset[0], trainset[1])
     p1 = nb.predict(testset[0])
     print accuracy_score(testset[1], p1)
-    nb = NaiveBayes()
-    ada = AdaBoost(nb, 200)
+    nb = DecisionTreeClassifier(is_prune=False)
+    ada = AdaBoost(nb, 100)
     ada.fit(trainset[0], trainset[1])
     prediction = ada.predict(testset[0])
     performance = accuracy_score(testset[1], prediction)
