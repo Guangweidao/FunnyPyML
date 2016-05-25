@@ -3,9 +3,14 @@
 import cPickle
 import os
 from abc import abstractmethod
+from base._logging import get_logger
 
 
 class AbstractLearner(object):
+
+    def __init__(self):
+        self._logger = get_logger(self.__class__.__name__)
+
     @abstractmethod
     def fit(self):
         pass
@@ -17,6 +22,7 @@ class AbstractLearner(object):
 
 class AbstractClassifier(AbstractLearner):
     def __init__(self):
+        super(AbstractClassifier, self).__init__()
         self._parameter = dict()
         self._grad_parameter = dict()
         self._is_trained = False
@@ -44,6 +50,7 @@ class AbstractClassifier(AbstractLearner):
 
 class AbstractRegressor(AbstractLearner):
     def __init__(self):
+        super(AbstractRegressor, self).__init__()
         self._parameter = dict()
         self._grad_parameter = dict()
         self._is_trained = False
@@ -71,6 +78,7 @@ class AbstractRegressor(AbstractLearner):
 
 class AbstractCluster(AbstractLearner):
     def __init__(self):
+        super(AbstractCluster, self).__init__()
         self._parameter = dict()
         self._grad_parameter = dict()
         self._is_trained = False

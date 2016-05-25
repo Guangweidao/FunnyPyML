@@ -56,3 +56,19 @@ def condition_entropy(x, cond):
     for k, v in fd.iteritems():
         result += v * entropy(x[cond == k])
     return result
+
+
+def roll_parameter(param_list):
+    assert isinstance(param_list, list), 'unroll param must be a list.'
+    return np.concatenate([param.flatten() for param in param_list])
+
+
+def unroll_parameter(flatten_param, parameter_shape):
+    ix = 0
+    param_list = list()
+    for shape in parameter_shape:
+        nParam = np.multiply.accumulate(shape)[-1]
+        param = flatten_param[ix:ix + nParam].reshape(shape)
+        param_list.append(param)
+        ix += nParam
+    return param_list

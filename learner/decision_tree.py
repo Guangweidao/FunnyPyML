@@ -11,8 +11,6 @@ from base.metric import accuracy_score
 from util.shuffle_split import ShuffleSpliter
 from base._logging import get_logger
 
-logger = get_logger(__name__)
-
 
 class DecisionTreeClassifier(AbstractClassifier):
     def __init__(self, min_split=1, is_prune=False):
@@ -57,7 +55,7 @@ class DecisionTreeClassifier(AbstractClassifier):
                 if perf_no_prone < perf_with_prone:
                     improve = perf_with_prone - perf_no_prone
                     # improve /= num_leaf_no_prone - num_leaf_with_prone - 1
-                    logger.info('tree prune, validation precision improve %f' % (improve))
+                    self._logger.info('tree prune, validation precision improve %f' % (improve))
                 else:
                     tree[feat][feat_val] = subtree
                     self._tree_prune(subtree, Xval, yval)
@@ -228,6 +226,6 @@ if __name__ == '__main__':
     trainset, testset = dataset.cross_split()
     dt = DecisionTreeClassifier(min_split=1, is_prune=False)
     dt.fit(trainset[0], trainset[1])
-    predict = dt.predict_proba(testset[0])
-    # performance = accuracy_score(testset[1], predict)
-    # print 'test accuracy:', performance
+    predict = dt.predict(testset[0])
+    performance = accuracy_score(testset[1], predict)
+    print 'test accuracy:', performance

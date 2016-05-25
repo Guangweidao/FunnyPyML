@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import copy
-from util.heap import Heap
+
+import numpy as np
+
 from base.common_function import euclidean_distance
+from util.heap import Heap
 
 
 class KDNode(object):
@@ -18,8 +20,10 @@ class KDNode(object):
 class KDTree(object):
     def __init__(self, X, y, dist):
         super(KDTree, self).__init__()
+        self.nSize = X.shape[0]
         self._nCol = X.shape[1]
         self._dist = dist
+        self._search_count = 0
         self.root = self.build_kd_tree(X, y, 0)
         self.root.father = None
 
@@ -58,6 +62,7 @@ class KDTree(object):
         candidate = Heap(neighbor_compare)
         nearest_neighbor = Heap(k, neighbor_compare)
         candidate.insert(root)
+        self._search_count = 0
         while len(candidate) > 0:
             node = candidate.pop(1)
             is_search = True
@@ -66,18 +71,19 @@ class KDTree(object):
                 if father is not None:
                     _centriod = copy.deepcopy(centriod)
                     _centriod[father.axis] = father.X[father.axis]
-                    if self._dist(father.X, _centriod) > self._dist(nearest_neighbor[1].X, centriod):
+                    if self._dist(_centriod, centriod) > self._dist(nearest_neighbor[1].X, centriod):
                         is_search = False
                     else:
                         is_search = True
             if is_search is True:
                 self.search_subtree(node, centriod, candidate, nearest_neighbor)
-        return [node for node in nearest_neighbor]
+        return nearest_neighbor
 
     def search_subtree(self, subtree, centroid, candidate, nearest_neighbor):
         if subtree is None:
             return
         nearest_neighbor.insert(subtree)
+        self._search_count += 1
         if centroid[subtree.axis] > subtree.X[subtree.axis]:
             if subtree.left_child is not None:
                 candidate.insert(subtree.left_child)
@@ -93,8 +99,6 @@ class KDTree(object):
             else:
                 return self.search_subtree(subtree.left_child, centroid, candidate, nearest_neighbor)
 
+    def get_search_ratio(self):
+        return float(self._search_count) / self.nSize
 
-if __name__ == '__main__':
-    X = np.array([[7, 2], [8, 1], [9, 6], [5, 4], [2, 3], [4, 7]])
-    kd = KDTree(X, np.ones(X.shape[0]), euclidean_distance)
-    print kd.search(kd.root, np.array([5, 0]), 2)

@@ -9,6 +9,8 @@ from base.common_function import *
 from optimizer.sgd import StochasticGradientDescent
 from base.metric import accuracy_score
 from loss.cross_entropy import CrossEntropy
+from optimizer.cg import ConjugateGradientDescent
+from base.common_function import roll_parameter, unroll_parameter
 
 
 class LogisticRegression(AbstractClassifier):
@@ -18,6 +20,7 @@ class LogisticRegression(AbstractClassifier):
         self._nClass = None
         self._label2ix = None
         self._ix2label = None
+        self._parameter_shape = list()
         self._lossor = CrossEntropy()
 
         self._batch_size = batch_size
@@ -28,8 +31,9 @@ class LogisticRegression(AbstractClassifier):
     def predict(self, X):
         assert self._is_trained, 'model must be trained before predict.'
         nSize = X.shape[0]
-        proj = np.dot(X, self._parameter['weight']) + np.repeat(
-            np.reshape(self._parameter['bias'], (1, self._parameter['bias'].shape[0])), X.shape[0], axis=0)
+        param_list = unroll_parameter(self._parameter, self._parameter_shape)
+        W, b = param_list[0], param_list[1]
+        proj = np.dot(X, W) + np.repeat(np.reshape(b, (1, b.shape[0])), X.shape[0], axis=0)
         h = sigmoid(proj)
         pred = [1 if v >= 0.5 else 0 for v in h]
         return np.array([self._ix2label[ix] for ix in pred])
@@ -44,16 +48,18 @@ class LogisticRegression(AbstractClassifier):
             self._nFeat = _X.shape[1]
             self._nClass = len(np.unique(_y))
             assert self._nClass == 2, 'class number must be 2.'
-            self._parameter['weight'] = np.random.uniform(0, 0.08, (self._nFeat, 1))
-            self._parameter['bias'] = np.zeros(1)
-            self._grad_parameter['weight'] = np.zeros((self._nFeat, 1))
-            self._grad_parameter['bias'] = np.zeros(1)
+            W = np.random.uniform(-0.08, 0.08, (self._nFeat, 1))
+            b = np.zeros(1)
+            self._parameter_shape.append(W.shape)
+            self._parameter_shape.append(b.shape)
+            self._parameter = roll_parameter([W, b])
         _y = np.array([self._label2ix[label] for label in _y])
         nSize = _X.shape[0]
         assert nSize >= self._batch_size, 'batch size must less or equal than X size.'
-        optimizer = StochasticGradientDescent(learning_rate=self._learning_rate, batch_size=self._batch_size,
-                                              max_iter=self._max_iter, epoches_per_plot=100)
-        optimizer.run(feval=self.feval, X=_X, y=_y, parameter=self._parameter)
+        # optimizer = StochasticGradientDescent(learning_rate=self._learning_rate, batch_size=self._batch_size,
+        #                                       max_iter=self._max_iter, is_plot_loss=True)
+        optimizer = ConjugateGradientDescent(max_iter=2000)
+        self._parameter = optimizer.optim(feval=self.feval, X=_X, y=_y, parameter=self._parameter)
         self._is_trained = True
 
     def __check_valid(self, X, y):
@@ -69,15 +75,17 @@ class LogisticRegression(AbstractClassifier):
 
     def feval(self, parameter, X, y):
         y = np.reshape(y, (y.shape[0], 1))
+        param_list = unroll_parameter(parameter, self._parameter_shape)
+        W, b = param_list[0], param_list[1]
         nSize = X.shape[0]
-        proj = np.dot(X, parameter['weight']) + np.repeat(
-            np.reshape(parameter['bias'], (1, parameter['bias'].shape[0])), X.shape[0], axis=0)
+        proj = np.dot(X, W) + np.repeat(np.reshape(b, (1, b.shape[0])), X.shape[0], axis=0)
         h = sigmoid(proj)
-        loss = self._lossor.calculate(y, h)
         residual = h - y
-        self._grad_parameter['weight'] = 1. / nSize * np.dot(X.T, residual)
-        self._grad_parameter['bias'] = 1. / nSize * np.sum(residual)
-        return loss, self._grad_parameter
+        loss = self._lossor.calculate(y, h)
+        grad_W = 1. / nSize * np.dot(X.T, residual)
+        grad_b = 1. / nSize * np.sum(residual)
+        grad_parameter = roll_parameter([grad_W, grad_b])
+        return loss, grad_parameter
 
 
 if __name__ == '__main__':

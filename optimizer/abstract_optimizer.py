@@ -3,15 +3,14 @@ import matplotlib.pyplot as plt
 from abc import abstractmethod
 from base._logging import get_logger
 
-logger = get_logger(__name__)
-
 
 class AbstractOptimizer(object):
     def __init__(self):
+        self._logger = get_logger(self.__class__.__name__)
         self.losses = list()
 
     @abstractmethod
-    def run(self, feval, X, y, parameter):
+    def optim(self, feval, X, y, parameter):
         pass
 
     def plot(self):
@@ -20,4 +19,4 @@ class AbstractOptimizer(object):
             plt.show(block=True)
 
         else:
-            logger.warning('loss information is too few.')
+            self._logger.warning('loss information is too few.')

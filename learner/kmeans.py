@@ -5,10 +5,7 @@ import matplotlib.pyplot as plt
 from abstract_learner import AbstractCluster
 from base.common_function import euclidean_distance
 from base.dataloader import DataLoader
-from base._logging import get_logger
 from base.metric import cluster_f_measure
-
-logger = get_logger(__name__)
 
 
 class Kmeans(AbstractCluster):
@@ -60,7 +57,7 @@ class Kmeans(AbstractCluster):
                 break
             else:
                 last_total_dist = total_dist
-            logger.info('total distance: %f' % (total_dist))
+            self._logger.info('total distance: %f' % (total_dist))
         self._parameter['cluster_center'] = centroids
         if self._is_plot is True:
             self.plot_scatter(X, centroids, cluster_belong)
@@ -69,11 +66,11 @@ class Kmeans(AbstractCluster):
     def plot_scatter(self, X, centroids, cluster_belong):
         nFeat = X.shape[1]
         if nFeat != 2:
-            logger.warning('feature number must be 2.')
+            self._logger.warning('feature number must be 2.')
             return
         mark = ['or', 'ob', 'og', 'ok', '^r', '+r', 'sr', 'dr', '<r', 'pr']
         if self._K > len(mark):
-            logger.warning('k is too large.')
+            self._logger.warning('k is too large.')
             return
         # plot all point
         for i in cluster_belong.keys():
