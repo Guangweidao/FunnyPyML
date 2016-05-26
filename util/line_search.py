@@ -1,28 +1,59 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-def wolfe(feval, xk, dk, gk, ck, alpha):
-    rho = 1e-4
-    sigma = 0.9  # sigma control the weight between exact and inexact line seach,
-    max_iter = 100
+
+def wolfe(f, xk, dk, alpha, rho=0.1, sigma=0.4, max_iter=50):
+    # rho control the distance from right interval, rho ∈ (0, 0.5)
+    # sigma control the weight between exact and inexact line seach, sigma ∈ [rho, 1]
+    # sigma = 0.1 indicates a very exact line seach which would time consuming
+    # sigma = 0.9 indicates a weak line search(inexact), but more faster
     a = 0.
     b = float('inf')
-    g_old = gk
-    v_old = ck
-    gtd_old = np.dot(g_old.T, dk)
+    ck, gk = f(xk)
+    gtd = np.dot(gk.T, dk)
     for i in xrange(max_iter):
-        xk_new = xk + alpha * dk
-        v_new, g_new = feval(xk_new)
-        gtd_new = np.dot(g_new.T, dk)
-        if not v_new <= v_old + rho * alpha * gtd_old:
+        xk_plus = xk + alpha * dk
+        ck_plus, gk_plus = f(xk_plus)
+
+        # condition: f(xk + alpha*dk) <= f(xk) + rho*f'(xk)*alpha*dk
+        if not ck_plus <= ck + rho * alpha * gtd:
+            _alpha = a + (alpha - a) / (2 * (1 + (ck - ck_plus) / ((alpha - a) * gtd)))
             b = alpha
-            alpha = (alpha + a) / 2
+            alpha = _alpha
             continue
-        if not abs(gtd_new) <= -sigma * gtd_old:
-            if gtd_new * (b - a) >= 0:
+
+        gtd_plus = np.dot(gk_plus.T, dk)
+        # condition: |f'(xk+alpha*dk)*dk| <= - sigma * f'(xk) * dk
+        if not abs(gtd_plus) <= -sigma * gtd:
+            if gtd_plus * (b - a) >= 0:
                 b = a
             a = alpha
             alpha = min(10 * alpha, (b + alpha) / 2)
             continue
         break
-    return alpha, v_new, g_new, xk_new
+    return alpha, ck_plus, gk_plus, xk_plus
+
+
+def armijo(f, xk, dk, alpha, rho=1e-1, max_iter=50):
+    # rho control the distance from right interval, rho ∈ (0, 0.5)
+    a = 0.
+    b = float('inf')
+    ck, gk = f(xk)
+    gtd = np.dot(gk.T, dk)
+    for i in xrange(max_iter):
+        xk_plus = xk + alpha * dk
+        ck_plus, gk_plus = f(xk_plus)
+
+        # condition: f(xk + alpha*dk) <= f(xk) + rho*f'(xk)*alpha*dk
+        if not ck_plus <= ck + rho * alpha * gtd:
+            b = alpha
+            alpha = (a + b) / 2
+            continue
+
+        # condition: f(xk + alpha*dk) >= f(xk) + (1-rho)*f'(xk)*alpha*dk
+        if not ck_plus >= ck + (1 - rho) * alpha * gtd:
+            a = alpha
+            alpha = min(10 * alpha, (a + b) / 2)
+            continue
+        break
+    return alpha, ck_plus, gk_plus, xk_plus

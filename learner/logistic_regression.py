@@ -6,11 +6,13 @@ import copy
 from abstract_learner import AbstractClassifier
 from base.dataloader import DataLoader
 from base.common_function import *
+from optimizer.momentum import MomentumSGD
 from optimizer.sgd import StochasticGradientDescent
 from base.metric import accuracy_score
 from loss.cross_entropy import CrossEntropy
 from optimizer.cg import ConjugateGradientDescent
 from base.common_function import roll_parameter, unroll_parameter
+from optimizer.lbfgs import LBFGS
 
 
 class LogisticRegression(AbstractClassifier):
@@ -57,8 +59,10 @@ class LogisticRegression(AbstractClassifier):
         nSize = _X.shape[0]
         assert nSize >= self._batch_size, 'batch size must less or equal than X size.'
         # optimizer = StochasticGradientDescent(learning_rate=self._learning_rate, batch_size=self._batch_size,
-        #                                       max_iter=self._max_iter, is_plot_loss=True)
-        optimizer = ConjugateGradientDescent(max_iter=2000)
+        #                                       decay_strategy='anneal', max_iter=self._max_iter, is_plot_loss=True)
+        # optimizer = MomentumSGD(learning_rate=self._learning_rate, batch_size=self._batch_size, momentum=0.9,
+        #                         momentum_type='standard', max_iter=self._max_iter, is_plot_loss=True)
+        optimizer = LBFGS(max_iter=self._max_iter)
         self._parameter = optimizer.optim(feval=self.feval, X=_X, y=_y, parameter=self._parameter)
         self._is_trained = True
 
@@ -93,7 +97,7 @@ if __name__ == '__main__':
     loader = DataLoader(path)
     dataset = loader.load(target_col_name='Class')
     trainset, testset = dataset.cross_split()
-    lr = LogisticRegression(max_iter=2000, batch_size=100, learning_rate=0.01, is_plot_loss=True)
+    lr = LogisticRegression(max_iter=500, batch_size=100, learning_rate=0.01, is_plot_loss=True)
     lr.fit(trainset[0], trainset[1])
     predict = lr.predict(testset[0])
     acc = accuracy_score(testset[1], predict)
