@@ -6,7 +6,11 @@ import copy
 from abstract_learner import AbstractClassifier
 from base.dataloader import DataLoader
 from base.common_function import *
+from optimizer.adadelta import Adadelta
+from optimizer.adagrad import Adagrad
+from optimizer.adam import Adam
 from optimizer.momentum import MomentumSGD
+from optimizer.rmsprop import RMSProp
 from optimizer.sgd import StochasticGradientDescent
 from base.metric import accuracy_score
 from loss.cross_entropy import CrossEntropy
@@ -58,11 +62,22 @@ class LogisticRegression(AbstractClassifier):
         _y = np.array([self._label2ix[label] for label in _y])
         nSize = _X.shape[0]
         assert nSize >= self._batch_size, 'batch size must less or equal than X size.'
-        # optimizer = StochasticGradientDescent(learning_rate=self._learning_rate, batch_size=self._batch_size,
-        #                                       decay_strategy='anneal', max_iter=self._max_iter, is_plot_loss=True)
+        optimizer = StochasticGradientDescent(learning_rate=self._learning_rate, batch_size=self._batch_size,
+                                              decay_strategy='anneal', max_iter=self._max_iter, is_plot_loss=True,
+                                              add_gradient_noise=True)
         # optimizer = MomentumSGD(learning_rate=self._learning_rate, batch_size=self._batch_size, momentum=0.9,
-        #                         momentum_type='standard', max_iter=self._max_iter, is_plot_loss=True)
-        optimizer = LBFGS(max_iter=self._max_iter)
+        #                         momentum_type='nesterov', max_iter=self._max_iter, is_plot_loss=True,
+        #                         add_gradient_noise=True)
+        # optimizer = Adagrad(learning_rate=self._learning_rate, batch_size=self._batch_size, max_iter=self._max_iter,
+        #                     is_plot_loss=True, add_gradient_noise=True)
+        # optimizer = Adadelta(batch_size=self._batch_size, max_iter=self._max_iter, is_plot_loss=True,
+        #                      add_gradient_noise=True)
+        # optimizer = RMSProp(learning_rate=self._learning_rate, batch_size=self._batch_size, max_iter=self._max_iter,
+        #                     is_plot_loss=True, add_gradient_noise=True)
+        # optimizer = Adam(learning_rate=self._learning_rate, batch_size=self._batch_size, max_iter=self._max_iter,
+        #                  is_plot_loss=True, add_gradient_noise=True)
+        # optimizer = ConjugateGradientDescent(max_iter=self._max_iter)
+        # optimizer = LBFGS(max_iter=self._max_iter)
         self._parameter = optimizer.optim(feval=self.feval, X=_X, y=_y, parameter=self._parameter)
         self._is_trained = True
 
@@ -97,8 +112,8 @@ if __name__ == '__main__':
     loader = DataLoader(path)
     dataset = loader.load(target_col_name='Class')
     trainset, testset = dataset.cross_split()
-    lr = LogisticRegression(max_iter=500, batch_size=100, learning_rate=0.01, is_plot_loss=True)
-    lr.fit(trainset[0], trainset[1])
+    lr = LogisticRegression(max_iter=200, batch_size=100, learning_rate=0.01, is_plot_loss=True)
+    lr.fit(X, trainset[1])
     predict = lr.predict(testset[0])
     acc = accuracy_score(testset[1], predict)
     print 'test accuracy:', acc

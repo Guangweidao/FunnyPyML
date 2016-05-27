@@ -33,15 +33,11 @@ class LBFGS(AbstractOptimizer):
             alpha = alpha * min(2, gktd / gktd_plus)
             gktd = gktd_plus
             alpha, loss, gk_plus, parameter = wolfe(f, parameter, dk, alpha)
-            if np.sum(np.abs(alpha * dk)) <= self._tol:
-                self._logger.info('step size below tol.')
-                break
-            if np.abs(loss - loss_old) < self._tol:
-                self._logger.info('loss changing by less than tol.')
-                break
             if epoch % self._epoches_record_loss == 0 or epoch == self._max_iter - 1 and loss is not None:
                 self.losses.append(loss)
                 self._logger.info('Epoch %d\tloss: %f' % (epoch, loss))
+            if self._check_converge(g=gk, d=dk, loss=loss, loss_old=loss_old, alpha=alpha):
+                break
         if self._is_plot_loss is True:
             self.plot()
         return parameter
