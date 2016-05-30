@@ -93,11 +93,11 @@ class LogisticRegression(AbstractClassifier):
             return is_valid
 
     def feval(self, parameter, X, y):
-        y = np.reshape(y, (y.shape[0], 1))
+        y = np.reshape(y, (-1, 1))
         param_list = unroll_parameter(parameter, self._parameter_shape)
         W, b = param_list[0], param_list[1]
         nSize = X.shape[0]
-        proj = np.dot(X, W) + np.repeat(np.reshape(b, (1, b.shape[0])), X.shape[0], axis=0)
+        proj = np.dot(X, W) + np.repeat(np.reshape(b, (1, -1)), X.shape[0], axis=0)
         h = sigmoid(proj)
         residual = h - y
         loss = self._lossor.calculate(y, h)
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     dataset = loader.load(target_col_name='Class')
     trainset, testset = dataset.cross_split()
     lr = LogisticRegression(max_iter=200, batch_size=100, learning_rate=0.01, is_plot_loss=True)
-    lr.fit(X, trainset[1])
+    lr.fit(trainset, trainset[1])
     predict = lr.predict(testset[0])
     acc = accuracy_score(testset[1], predict)
     print 'test accuracy:', acc
