@@ -6,6 +6,7 @@ from abstract_learner import AbstractCluster
 from base.common_function import euclidean_distance
 from base.dataloader import DataLoader
 from base.metric import cluster_f_measure
+from base._logging import get_logger
 
 
 class Kmeans(AbstractCluster):
@@ -57,7 +58,7 @@ class Kmeans(AbstractCluster):
                 break
             else:
                 last_total_dist = total_dist
-            self._logger.info('total distance: %f' % (total_dist))
+            logger.info('total distance: %f' % (total_dist))
         self._parameter['cluster_center'] = centroids
         if self._is_plot is True:
             self.plot_scatter(X, centroids, cluster_belong)
@@ -66,11 +67,11 @@ class Kmeans(AbstractCluster):
     def plot_scatter(self, X, centroids, cluster_belong):
         nFeat = X.shape[1]
         if nFeat != 2:
-            self._logger.warning('feature number must be 2.')
+            logger.warning('feature number must be 2.')
             return
         mark = ['or', 'ob', 'og', 'ok', '^r', '+r', 'sr', 'dr', '<r', 'pr']
         if self._K > len(mark):
-            self._logger.warning('k is too large.')
+            logger.warning('k is too large.')
             return
         # plot all point
         for i in cluster_belong.keys():
@@ -93,6 +94,8 @@ class Kmeans(AbstractCluster):
             return is_valid
 
 
+logger = get_logger(Kmeans.__name__)
+
 if __name__ == '__main__':
     path = os.getcwd() + '/../dataset/iris.arff'
     loader = DataLoader(path)
@@ -102,4 +105,4 @@ if __name__ == '__main__':
     kmeans.fit(trainset[0][:, [1, 3]])
     prediction = kmeans.predict(testset[0][:, [1, 3]])
     performance = cluster_f_measure(testset[1], prediction)
-    print performance
+    print 'F-measure:', performance

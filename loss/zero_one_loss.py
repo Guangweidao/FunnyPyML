@@ -5,7 +5,5 @@ from abstract_loss import AbstractLoss
 
 class ZeroOneLoss(AbstractLoss):
     def calculate(self, ground_truth, hypothesis):
-        ground_truth = ground_truth.as_type(np.int)
-        hypothesis = hypothesis.as_type(np.int)
-        loss = np.sum(ground_truth ^ hypothesis)
+        loss = np.sum([1 if a != b else 0 for a, b in zip(ground_truth, hypothesis)])
         return loss

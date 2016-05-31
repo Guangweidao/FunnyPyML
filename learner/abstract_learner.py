@@ -3,13 +3,10 @@
 import cPickle
 import os
 from abc import abstractmethod
-from base._logging import get_logger
 
 
 class AbstractLearner(object):
 
-    def __init__(self):
-        self._logger = get_logger(self.__class__.__name__)
 
     @abstractmethod
     def fit(self):
@@ -72,7 +69,7 @@ class AbstractRegressor(AbstractLearner):
         assert os.path.exists(input_path), 'input path does not exist.'
         with open(input_path, 'r') as input_file:
             model = cPickle.load(input_file)
-            assert isinstance(model, AbstractClassifier), 'loaded model is not what you are looking for.'
+            assert isinstance(model, AbstractRegressor), 'loaded model is not what you are looking for.'
         return model
 
 

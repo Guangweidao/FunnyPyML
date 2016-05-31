@@ -39,7 +39,7 @@ class LogisticRegression(AbstractClassifier):
         nSize = X.shape[0]
         param_list = unroll_parameter(self._parameter, self._parameter_shape)
         W, b = param_list[0], param_list[1]
-        proj = np.dot(X, W) + np.repeat(np.reshape(b, (1, b.shape[0])), X.shape[0], axis=0)
+        proj = np.dot(X, W) + np.repeat(np.reshape(b, (1, -1)), nSize, axis=0)
         h = sigmoid(proj)
         pred = [1 if v >= 0.5 else 0 for v in h]
         return np.array([self._ix2label[ix] for ix in pred])
@@ -112,8 +112,8 @@ if __name__ == '__main__':
     loader = DataLoader(path)
     dataset = loader.load(target_col_name='Class')
     trainset, testset = dataset.cross_split()
-    lr = LogisticRegression(max_iter=200, batch_size=100, learning_rate=0.01, is_plot_loss=True)
-    lr.fit(trainset, trainset[1])
+    lr = LogisticRegression(max_iter=100, batch_size=100, learning_rate=0.01, is_plot_loss=True)
+    lr.fit(trainset[0], trainset[1])
     predict = lr.predict(testset[0])
     acc = accuracy_score(testset[1], predict)
     print 'test accuracy:', acc

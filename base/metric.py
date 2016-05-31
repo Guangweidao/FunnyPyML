@@ -36,4 +36,4 @@ def cluster_f_measure(ytrue, pred):
                 f[i, j] = 0.
             else:
                 f[i, j] = 2. * (precision * recall) / (precision + recall)
-    return np.sum([f[i][j] * len(_ytrue[_ytrue == i]) for i in xrange(nClassTrue) for j in xrange(nClassPred)]) / nSize
+    return np.nansum([f[i][j] * len(_ytrue[_ytrue == i]) for i in xrange(nClassTrue) for j in xrange(nClassPred)]) / nSize

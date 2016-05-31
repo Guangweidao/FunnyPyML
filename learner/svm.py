@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from abstract_learner import AbstractClassifier
 from base.dataloader import DataLoader
 from base.metric import accuracy_score
+from base._logging import get_logger
 
 
 class SVM(AbstractClassifier):
@@ -23,14 +24,14 @@ class SVM(AbstractClassifier):
         self._p = None
         if self._kernel_type == 'rbf':
             if 'sigma' not in kwargs:
-                self._logger.info(
+                logger.info(
                     'kernel type is rbf (gaussian kernel), but you dont indicate sigma, default sigma=0.5')
                 self._sigma = 0.5
             else:
                 self._sigma = kwargs['sigma']
         elif self._kernel_type == 'poly':
             if 'p' not in kwargs:
-                self._logger.info(
+                logger.info(
                     'kernel type is polynomial, but you dont indicate p, default p=1')
                 self._p = 1
             else:
@@ -205,9 +206,9 @@ class SVM(AbstractClassifier):
     def plot(self, X):
         nSize, nFeat = X.shape
         if nFeat != 2:
-            self._logger.warning('feature number must be 2.')
+            logger.warning('feature number must be 2.')
             return
-        self._logger.info('start plotting...')
+        logger.info('start plotting...')
         pred = self._predict(X)
         h = 0.02  # step size in the mesh
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -221,6 +222,7 @@ class SVM(AbstractClassifier):
         plt.contour(xx, yy, Z, cmap=plt.cm.Paired)
         plt.show()
 
+logger = get_logger(SVM.__name__)
 
 if __name__ == '__main__':
     path = os.getcwd() + '/../dataset/iris.arff'

@@ -104,7 +104,7 @@ if __name__ == '__main__':
     predict = nb.predict(testset[0])
     acc = accuracy_score(testset[1], predict)
     print acc
-    nb.dump('NB.model')
+    # nb.dump('NB.model')
     # nb = NaiveBayes.load('NB.model')
     # predict = nb.predict(testset[0])
     # print accuracy_score(testset[1], predict)

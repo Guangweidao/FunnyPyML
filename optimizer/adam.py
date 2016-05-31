@@ -24,25 +24,26 @@ class Adam(AbstractOptimizer):
         nBatch = int(math.ceil(float(nSize) / self._batch_size))
         assert self._batch_size <= nSize, 'batch size must less or equal than X size'
         ix = 0
-        loss = None
+        loss_new = None
         learning_rate = self._learning_rate
         m = np.zeros_like(parameter)
         v = np.zeros_like(parameter)
         beta1_t = 1
         beta2_t = 1
         for epoch in range(self._max_iter):
-            loss_old = loss
+            loss_old = loss_new
             if self._is_shuffle is True:
                 indices = np.random.permutation(nSize)  # shuffle the input every epoch
             else:
                 indices = range(nSize)
-
+            loss_batches = list()
             for i in range(nBatch):
                 batch = min(self._batch_size, nSize - ix)
                 _X = X[indices[ix: ix + batch]]
                 _y = y[indices[ix: ix + batch]]
                 ix = ix + batch if ix + batch < nSize else 0
                 loss, grad_parameter = feval(parameter, _X, _y)
+                loss_batches.append(loss)
                 if self._add_gradient_noise is True:
                     grad_parameter = self._gradient_noise(grad_parameter, learning_rate, epoch)
                 m = self._beta1 * m + (1 - self._beta1) * grad_parameter
@@ -51,10 +52,11 @@ class Adam(AbstractOptimizer):
                 bias_correction_m = m / (1 - beta1_t)
                 bias_correction_v = v / (1 - beta2_t)
                 parameter -= 1. / (np.sqrt(bias_correction_v) + self._epsilon) * learning_rate * bias_correction_m
-            if epoch % self._epoches_record_loss == 0 or epoch == self._max_iter - 1 and loss is not None:
-                self.losses.append(loss)
-                self._logger.info('Epoch %d\tloss: %f' % (epoch, loss))
-            if self._check_converge(g=grad_parameter, d=-grad_parameter, loss=loss, loss_old=loss_old,
+            loss_new = np.mean(loss_batches)
+            if epoch % self._epoches_record_loss == 0 or epoch == self._max_iter - 1 and loss_new is not None:
+                self.losses.append(loss_new)
+                self._logger.info('Epoch %d\tloss: %f' % (epoch, loss_new))
+            if self._check_converge(g=grad_parameter, d=-grad_parameter, loss=loss_new, loss_old=loss_old,
                                     alpha=learning_rate):
                 break
         if self._is_plot_loss is True:

@@ -9,7 +9,7 @@ from abstract_learner import AbstractRegressor
 from base.metric import mean_error
 from util.kd_tree import KDTree
 from base.common_function import euclidean_distance
-
+from base._logging import get_logger
 
 class KNNClassifier(AbstractClassifier):
     def __init__(self, k=10, search_mode='kd_tree'):
@@ -24,7 +24,7 @@ class KNNClassifier(AbstractClassifier):
             self._nFeat = X.shape[1]
         if self._search_mode == 'kd_tree':
             self._parameter['kd_tree'] = KDTree(X, y, euclidean_distance)
-            self._logger.info('KD Tree is builded up.')
+            logger.info('KD Tree is builded up.')
         elif self._search_mode == 'brutal':
             self._parameter['neighbor_X'] = X
             self._parameter['neighbor_y'] = y
@@ -42,7 +42,7 @@ class KNNClassifier(AbstractClassifier):
                 neighbor = kd_tree.search(kd_tree.root, X[i, :], K)
                 fd = FreqDict([v.y for v in neighbor], reverse=True)
                 pred.append(fd.keys()[0])
-                self._logger.info(
+                logger.info(
                     'progress : %.2f %%\tsearch ratio : %f' % (float(i) / X.shape[0] * 100, kd_tree.get_search_ratio()))
         elif self._search_mode == 'brutal':
             K = min(self._K, len(self._parameter['neighbor_y']))
@@ -53,7 +53,7 @@ class KNNClassifier(AbstractClassifier):
                 indices = np.argsort(dist)[:K]
                 fd = FreqDict(list(self._parameter['neighbor_y'][indices]), reverse=True)
                 pred.append(fd.keys()[0])
-                self._logger.info('progress: %.2f %%' % (float(i) / X.shape[0] * 100))
+                logger.info('progress: %.2f %%' % (float(i) / X.shape[0] * 100))
         else:
             raise ValueError
         return pred
@@ -83,7 +83,7 @@ class KNNRegressor(AbstractRegressor):
             self._nFeat = X.shape[1]
         if self._search_mode == 'kd_tree':
             self._parameter['kd_tree'] = KDTree(X, y, euclidean_distance)
-            self._logger.info('KD Tree is builded up.')
+            logger.info('KD Tree is builded up.')
         elif self._search_mode == 'brutal':
             self._parameter['neighbor_X'] = X
             self._parameter['neighbor_y'] = y
@@ -111,7 +111,7 @@ class KNNRegressor(AbstractRegressor):
             for i in xrange(X.shape[0]):
                 neighbor = kd_tree.search(kd_tree.root, X[i, :], K)
                 pred.append(np.mean([node.y for node in neighbor]))
-                self._logger.info(
+                logger.info(
                     'progress : %.2f %%\tsearch ratio : %f' % (float(i) / X.shape[0] * 100, kd_tree.get_search_ratio()))
         elif self._search_mode == 'brutal':
             K = min(self._K, len(self._parameter['neighbor_y']))
@@ -121,11 +121,12 @@ class KNNRegressor(AbstractRegressor):
                     dist.append(np.linalg.norm(X[i, :] - self._parameter['neighbor_X'][irow, :]))
                 indices = np.argsort(dist)[:K]
                 pred.append(np.mean(self._parameter['neighbor_y'][indices]))
-                self._logger.info('progress: %.2f %%' % (float(i) / X.shape[0] * 100))
+                logger.info('progress: %.2f %%' % (float(i) / X.shape[0] * 100))
         else:
             raise ValueError
         return pred
 
+logger = get_logger('KNN')
 
 if __name__ == '__main__':
     from base.time_scheduler import TimeScheduler

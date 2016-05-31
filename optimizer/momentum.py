@@ -23,16 +23,17 @@ class MomentumSGD(AbstractOptimizer):
         nBatch = int(math.ceil(float(nSize) / self._batch_size))
         assert self._batch_size <= nSize, 'batch size must less or equal than X size'
         ix = 0
-        loss = None
+        loss_new = None
         v = 0.
         learning_rate = self._learning_rate
         for epoch in range(self._max_iter):
-            loss_old = loss
+            loss_old = loss_new
             if self._is_shuffle is True:
                 indices = np.random.permutation(nSize)  # shuffle the input every epoch
             else:
                 indices = range(nSize)
 
+            loss_batches = list()
             for i in range(nBatch):
                 batch = min(self._batch_size, nSize - ix)
                 _X = X[indices[ix: ix + batch]]
@@ -52,10 +53,12 @@ class MomentumSGD(AbstractOptimizer):
                     parameter -= v
                 else:
                     raise ValueError
-            if epoch % self._epoches_record_loss == 0 or epoch == self._max_iter - 1 and loss is not None:
-                self.losses.append(loss)
-                self._logger.info('Epoch %d\tloss: %f' % (epoch, loss))
-            if self._check_converge(g=grad_parameter, d=-grad_parameter, loss=loss, loss_old=loss_old,
+                loss_batches.append(loss)
+            loss_new = np.mean(loss_batches)
+            if epoch % self._epoches_record_loss == 0 or epoch == self._max_iter - 1 and loss_new is not None:
+                self.losses.append(loss_new)
+                self._logger.info('Epoch %d\tloss: %f' % (epoch, loss_new))
+            if self._check_converge(g=grad_parameter, d=-grad_parameter, loss=loss_new, loss_old=loss_old,
                                     alpha=learning_rate):
                 break
         if self._is_plot_loss is True:

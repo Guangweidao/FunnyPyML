@@ -81,13 +81,18 @@ if __name__ == '__main__':
     loader = DataLoader(path)
     dataset = loader.load(target_col_name='class')
     trainset, testset = dataset.cross_split()
-    nb = DecisionTreeClassifier(is_prune=False)
+    nb = NaiveBayes()
     nb.fit(trainset[0], trainset[1])
     p1 = nb.predict(testset[0])
-    print accuracy_score(testset[1], p1)
-    nb = DecisionTreeClassifier(is_prune=False)
-    ada = AdaBoost(nb, 100)
+    print 'NaiveBayes accuracy:', accuracy_score(testset[1], p1)
+    base_learner = NaiveBayes()
+    ada = AdaBoost(base_learner, 100)
     ada.fit(trainset[0], trainset[1])
     prediction = ada.predict(testset[0])
     performance = accuracy_score(testset[1], prediction)
-    print performance
+    print 'AdaBoost accuracy:', performance
+    # ada.dump('ada.model')
+    # ada = AdaBoost.load('ada.model')
+    # prediction = ada.predict(testset[0])
+    # performance = accuracy_score(testset[1], prediction)
+    # print performance

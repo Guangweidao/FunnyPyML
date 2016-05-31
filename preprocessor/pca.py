@@ -72,6 +72,6 @@ if __name__ == '__main__':
     X = trainset[0][:, [0, 2]]
     pca.fit(X)
     _X = pca.transform(X)
-    print pca.information_distribution(percent=True)
+    print 'eigenvalue:', pca.information_distribution(percent=True)
     pca.plot(X)
     pca.plot(_X)
