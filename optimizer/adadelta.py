@@ -42,8 +42,9 @@ class Adadelta(AbstractOptimizer):
                 if self._add_gradient_noise is True:
                     grad_parameter = self._gradient_noise(grad_parameter, 1e-3, epoch)
                 rms_grad = self._gama * rms_grad + (1 - self._gama) * grad_parameter ** 2
-                parameter -= np.sqrt(rms_param + self._epsilon) / np.sqrt(rms_grad + self._epsilon) * grad_parameter
-                rms_param = self._gama * rms_param + (1 - self._gama) * grad_parameter ** 2
+                delta_param = np.sqrt(rms_param + self._epsilon) / np.sqrt(rms_grad + self._epsilon) * grad_parameter
+                parameter -= delta_param
+                rms_param = self._gama * rms_param + (1 - self._gama) * delta_param ** 2
             loss_new = np.mean(loss_batches)
             if epoch % self._epoches_record_loss == 0 or epoch == self._max_iter - 1 and loss_new is not None:
                 self.losses.append(loss_new)

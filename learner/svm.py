@@ -10,7 +10,7 @@ from base._logging import get_logger
 
 
 class SVM(AbstractClassifier):
-    def __init__(self, max_iter, kernel_type='linear', tol=1e-1, C=1, **kwargs):
+    def __init__(self, max_iter=5, kernel_type='linear', tol=1e-1, C=1, **kwargs):
         super(SVM, self).__init__()
         self._max_iter = max_iter
         self._kernel_type = kernel_type
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     trainset, testset = dataset.cross_split()
     X = trainset[0][:, [0, 1]]
     y = trainset[1]
-    svm = SVM(5, kernel_type='rbf', sigma=0.3)
+    svm = SVM(kernel_type='rbf', sigma=0.3)
     svm.fit(X, y)
     predict = svm.predict(testset[0][:, [0, 1]])
     print 'test accuracy:', accuracy_score(testset[1], predict)
